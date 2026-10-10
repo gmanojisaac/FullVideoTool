@@ -1,0 +1,57 @@
+{
+  "name": "six-tile-lesson-video-builder",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "server": "tsx server/index.ts",
+    "build": "tsc --noEmit && vite build",
+    "start": "tsx server/index.ts --production",
+    "fixtures": "tsx scripts/fixtures.ts",
+    "grids": "tsx scripts/generate-grids.ts",
+    "focus-previews": "tsx scripts/generate-focus.ts",
+    "render-animations": "tsx scripts/render-animations.ts",
+    "test": "tsx --test tests/module-ten.test.ts",
+    "test:module1": "tsx --test tests/module-one.test.ts",
+    "test:module2": "tsx --test tests/module-two.test.ts",
+    "test:module3": "tsx --test tests/module-three.test.ts",
+    "test:module4": "tsx --test tests/module-four.test.ts",
+    "test:module5": "tsx --test tests/module-five.test.ts",
+    "test:module6": "tsx --test tests/module-six.test.ts",
+    "test:module7": "tsx --test tests/module-seven.test.ts",
+    "test:unit": "tsx --test --test-concurrency=1 tests/zip.test.ts tests/assembly-timeline.test.ts tests/assembly-jobs.test.ts tests/storage.test.ts",
+    "test:module10": "tsx --test tests/module-ten.test.ts",
+    "test:regression": "tsx --test --test-concurrency=1 tests/module-one.test.ts tests/module-two.test.ts tests/module-three.test.ts tests/module-four.test.ts tests/module-five.test.ts tests/module-six.test.ts tests/module-seven.test.ts tests/integration.test.ts tests/zip.test.ts tests/assembly-timeline.test.ts",
+    "assemble-lesson": "tsx scripts/assemble-lesson.ts",
+    "test:integration": "npm test",
+    "test:e2e": "playwright test",
+    "first-frames": "tsx scripts/generate-frames.ts",
+    "export-package": "tsx scripts/export-package.ts",
+    "test:ui": "playwright test",
+    "check": "npm run build && npm test && npm run test:ui"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "fflate": "^0.8.3",
+    "multer": "^2.0.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "sharp": "^0.34.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.3",
+    "tsx": "^4.20.5",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.7"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "source": "User supplied image-1.png, copied unchanged to sample-comic.png",
+  "portrait": {
+    "width": 848,
+    "height": 1264,
+    "layout": "2x3",
+    "panels": [
+      {
+        "id": 1,
+        "x": 11,
+        "y": 7,
+        "width": 408,
+        "height": 410
+      },
+      {
+        "id": 2,
+        "x": 430,
+        "y": 7,
+        "width": 407,
+        "height": 410
+      },
+      {
+        "id": 3,
+        "x": 11,
+        "y": 428,
+        "width": 408,
+        "height": 410
+      },
+      {
+        "id": 4,
+        "x": 430,
+        "y": 428,
+        "width": 407,
+        "height": 410
+      },
+      {
+        "id": 5,
+        "x": 11,
+        "y": 849,
+        "width": 408,
+        "height": 408
+      },
+      {
+        "id": 6,
+        "x": 430,
+        "y": 849,
+        "width": 407,
+        "height": 408
+      }
+    ]
+  },
+  "landscape": {
+    "width": 1272,
+    "height": 856,
+    "layout": "3x2",
+    "panels": [
+      {
+        "id": 1,
+        "x": 12,
+        "y": 12,
+        "width": 408,
+        "height": 410
+      },
+      {
+        "id": 2,
+        "x": 432,
+        "y": 12,
+        "width": 408,
+        "height": 410
+      },
+      {
+        "id": 3,
+        "x": 852,
+        "y": 12,
+        "width": 408,
+        "height": 410
+      },
+      {
+        "id": 4,
+        "x": 12,
+        "y": 434,
+        "width": 408,
+        "height": 410
+      },
+      {
+        "id": 5,
+        "x": 432,
+        "y": 434,
+        "width": 408,
+        "height": 410
+      },
+      {
+        "id": 6,
+        "x": 852,
+        "y": 434,
+        "width": 408,
+        "height": 410
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp,mkdir,writeFile,stat,rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { createAssemblyService } from '../server/assembly.js';
+import { atomicJson } from '../server/storage.js';
+async function workspace(action:(root:string)=>Promise<void>){const parent=path.resolve(tmpdir()),root=await mkdtemp(path.join(parent,'six-tile-assembly-job-'));try{await action(root);}finally{if(path.dirname(path.resolve(root))!==parent||!path.basename(root).startsWith('six-tile-assembly-job-'))throw new Error('Unsafe test cleanup.');await rm(root,{recursive:true,force:true});}}
+test('Lesson startup reserves its processing slot before asynchronous source reads',async()=>workspace(async root=>{const id=randomUUID(),service=createAssemblyService(root,async()=>{await new Promise(r=>setTimeout(r,50));throw new Error('Test source unavailable');}),first=service.start(id,{formats:['mobile']});assert(service.isRunning(id));await assert.rejects(service.start(id,{formats:['desktop']}),/Wait or cancel lesson processing/);await assert.rejects(first,/Test source unavailable/);assert.equal(service.isRunning(),false);await assert.rejects(service.start(id,{formats:['mobile']}),/Test source unavailable/);assert.equal(service.isRunning(),false);}));
+test('Service recreation identifies interrupted lesson jobs and removes partial MP4s',async()=>workspace(async root=>{const id=randomUUID(),run=randomUUID(),base=path.join(root,'exports',id,'assembly'),partial=path.join(base,'cache','example','segment.partial.mp4');await mkdir(path.dirname(partial),{recursive:true});await writeFile(partial,'Incomplete encoder output');await atomicJson(path.join(base,'jobs',run+'.json'),{id:run,projectId:id,operation:'render',status:'running',progress:45,message:'Interrupted',startedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});const service=createAssemblyService(root,async()=>{throw new Error('No frame source needed for job recovery test');}),job=await service.getJob(id,run);assert.equal(job.status,'failed');assert.match(job.error!,/application stopped/);await assert.rejects(stat(partial),{code:'ENOENT'});assert.equal(service.isRunning(),false);}));

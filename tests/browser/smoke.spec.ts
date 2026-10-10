@@ -1,0 +1,2 @@
+import { test,expect } from '@playwright/test';
+test('Application opens an empty workspace without browser runtime errors',async({page})=>{const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await expect(page.locator('.upload-content').getByRole('button',{name:'Upload comic',exact:true})).toBeEnabled();await expect(page.locator('#assemble-lesson')).toContainText('Save a six-tile project to begin.');expect(errors).toEqual([]);});
