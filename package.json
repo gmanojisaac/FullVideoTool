@@ -1,6 +1,6 @@
 {
   "name": "six-tile-lesson-video-builder",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -23,7 +23,8 @@
     "test:module5": "tsx --test tests/module-five.test.ts",
     "test:module6": "tsx --test tests/module-six.test.ts",
     "test:module7": "tsx --test tests/module-seven.test.ts",
-    "test:unit": "tsx --test --test-concurrency=1 tests/zip.test.ts tests/assembly-timeline.test.ts tests/assembly-jobs.test.ts tests/storage.test.ts",
+    "test:unit": "tsx --test --test-concurrency=1 tests/zip.test.ts tests/assembly-timeline.test.ts tests/assembly-jobs.test.ts tests/storage.test.ts tests/text-effects.test.ts",
+    "test:text": "tsx --test --test-concurrency=1 tests/text-effects.test.ts tests/text-render.test.ts tests/text-composition.test.ts",
     "test:module10": "tsx --test tests/module-ten.test.ts",
     "test:regression": "tsx --test --test-concurrency=1 tests/module-one.test.ts tests/module-two.test.ts tests/module-three.test.ts tests/module-four.test.ts tests/module-five.test.ts tests/module-six.test.ts tests/module-seven.test.ts tests/integration.test.ts tests/zip.test.ts tests/assembly-timeline.test.ts",
     "assemble-lesson": "tsx scripts/assemble-lesson.ts",
@@ -35,12 +36,15 @@
     "check": "npm run build && npm test && npm run test:ui"
   },
   "dependencies": {
+    "esbuild": "0.25.9",
     "express": "^5.1.0",
     "fflate": "^0.8.3",
     "multer": "^2.0.2",
+    "playwright": "1.55.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "sharp": "^0.34.4"
+    "sharp": "^0.34.4",
+    "three": "0.180.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.1",
@@ -49,6 +53,7 @@
     "@types/node": "^22.18.0",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
+    "@types/three": "0.180.0",
     "@vitejs/plugin-react": "^5.0.3",
     "tsx": "^4.20.5",
     "typescript": "~5.9.2",

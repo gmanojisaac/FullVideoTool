@@ -1,5 +1,7 @@
 # Six-Tile Lesson Video Builder
 
+Step 10 now includes an optional **3D Text Effects** editor with particle assembly, camera fly-through and environmental typography, local transparent PNG export, synchronized composition preview and final MP4 compositing. See [TEXT_EFFECTS.md](TEXT_EFFECTS.md), [integration locations](TEXT_EFFECTS_INTEGRATION.md) and [actual test outcomes](TEXT_EFFECTS_TEST_REPORT.md). Text export additionally requires local Chrome/Edge (or Playwright Chromium); no cloud renderer is used.
+
 A local React/TypeScript application for preparing six-panel Stitch comics, independent mobile and desktop camera videos, verified Gemini starting frames, Clipchamp asset packages and finished lessons assembled from imported video/narration. The existing Node/Express, Sharp and FFmpeg architecture is retained. Processing and project storage stay on this computer.
 
 Modules 1–7 and Module 10 are implemented. Project management, navigation, dependency status, an asset dashboard and a render queue from Module 9 are implemented. Module 8 is pending its remaining specification; Module 9 cannot yet meet its full acceptance. Actual test outcomes and limitations are recorded in TEST_REPORT.md.
@@ -15,7 +17,7 @@ npm run dev
 
 Open **http://localhost:5173**. The API is **http://localhost:3001**. Ctrl+C stops both. If a PowerShell npm shim is blocked, use `node 'C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js' run dev`.
 
-Release **1.0.0** ships the source, locked dependency versions, fixtures and documentation. Local projects, render outputs, media imports, test logs and screenshots are generated on your computer and are excluded from Git. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for release scope and verified outcomes.
+Release **2.0.0** ships the source, locked dependency versions, fixtures and documentation, including cinematic 3D text effects. Local projects, render outputs, media imports, test logs and screenshots are generated on your computer and are excluded from Git. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for release scope and verified outcomes; [Release 1.0 notes](RELEASE_NOTES_1.0.md) retain the earlier release history.
 
 For the built application:
 

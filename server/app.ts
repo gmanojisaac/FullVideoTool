@@ -26,6 +26,8 @@ import { projectDashboard } from './assets.js';
 import { runExportDiagnostics } from './export-checks.js';
 import { createRenderQueue } from './render-queue.js';
 import { createAssemblyService } from './assembly.js';
+import { createTextJobs } from './text-jobs.js';
+import { importTextHdr, textHdrFile } from './text-assets.js';
 import type { OutputFormat } from '../shared/layout.js';
 import { validateAnimationSettings, validAnimationRequest, type AnimationSettings } from '../shared/animation.js';
 import { ExtractionError } from './extraction.js';
@@ -61,17 +63,18 @@ export function createApp(dataRoot = path.join(root, 'data'), diagnostics = true
   };
   const packages = createExportService(dataRoot, getExportContext);
   const assembly = createAssemblyService(dataRoot, async id => { const c = await getExportContext(id); return {layout:c.layout,animation:c.animation,frames:c.frames}; });
+  const textJobs=createTextJobs(dataRoot,assembly.config);
   const uploadingMedia = new Set<string>();
   const processingProjects = new Set<string>();
-  const queue = createRenderQueue(dataRoot, animations, () => assembly.isRunning() || uploadingMedia.size > 0 || [...processingProjects].some(id => frames.isRunning(id) || packages.isRunning(id)));
-  const guardPackage = (id: string) => { assembly.guard(id); if (uploadingMedia.has(id)) throw new HttpError(409,'Wait for the media upload to finish.'); if (packages.isRunning(id)) throw new HttpError(409, 'Wait or cancel packaging before changing this project.'); };
+  const queue = createRenderQueue(dataRoot, animations, () => assembly.isRunning() || textJobs.isRunning() || uploadingMedia.size > 0 || [...processingProjects].some(id => frames.isRunning(id) || packages.isRunning(id)));
+  const guardPackage = (id: string) => { assembly.guard(id); if(textJobs.isRunning(id))throw new HttpError(409,'Wait or cancel text export before changing this project.'); if (uploadingMedia.has(id)) throw new HttpError(409,'Wait for the media upload to finish.'); if (packages.isRunning(id)) throw new HttpError(409, 'Wait or cancel packaging before changing this project.'); };
   const guardAnimation = (id: string) => { guardPackage(id); if (queue.isPending(id) || animations.isRunning(id) || frames.isRunning(id)) throw new HttpError(409, 'Wait or cancel camera/frame processing before changing its source or framing.'); };
   const guardProject = (id: string) => { guardAnimation(id); if (extraction.isRunning(id) || layouts.isRunning(id) || focus.isRunning(id)) throw new HttpError(409, 'Wait or cancel this project’s processing before changing it.'); };
   const management = createProjectManagement(dataRoot, getSavedProject, guardProject);
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: maxUpload, files: 1, fields: 2 } });
   const mediaPaths = new WeakMap<object,string>();
   const mediaUpload = multer({ storage: multer.diskStorage({ destination: (_req,_file,cb) => { const folder=path.join(dataRoot,'.uploads'); void mkdir(folder,{recursive:true}).then(()=>cb(null,folder),e=>cb(e,'')); }, filename: (req,_file,cb) => { const name=randomUUID()+'.upload';mediaPaths.set(req,path.join(dataRoot,'.uploads',name));cb(null,name); } }), limits:{fileSize:512*1024*1024,files:1,fields:3} });
-  function admitAssembly(id:string) { guardProject(id); if(queue.isRunning() || assembly.isRunning() || uploadingMedia.size || [...processingProjects].some(p=>frames.isRunning(p)||packages.isRunning(p))) throw new HttpError(409,'Finish or cancel current video processing before lesson assembly.'); }
+  function admitAssembly(id:string) { guardProject(id); if(queue.isRunning() || assembly.isRunning() || textJobs.isRunning() || uploadingMedia.size || [...processingProjects].some(p=>frames.isRunning(p)||packages.isRunning(p))) throw new HttpError(409,'Finish or cancel current video processing before lesson assembly.'); }
   app.disable('x-powered-by');
   app.use(express.json({ limit: '1mb' }));
   app.use('/api', (req, res, next) => {
@@ -314,6 +317,13 @@ export function createApp(dataRoot = path.join(root, 'data'), diagnostics = true
   app.post('/api/projects/:id/assembly/jobs/:runId/cancel',async(req,res)=>res.json(await assembly.cancel(req.params.id,req.params.runId)));
   app.get('/api/projects/:id/assembly/runs/:runId/files/:name',async(req,res)=>{const file=await assembly.file(req.params.id,req.params.runId,req.params.name);if(req.query.download==='1')res.attachment(req.params.name);res.sendFile(file);});
   app.get('/api/projects/:id/assembly/analysis/:key/:name',async(req,res)=>res.sendFile(await assembly.analysisFile(req.params.id,req.params.key,req.params.name)));
+  app.get('/api/projects/:id/assembly/text-jobs',async(req,res)=>{await getSavedProject(req.params.id);res.json(await textJobs.latest(req.params.id));});
+  app.post('/api/projects/:id/assembly/text-jobs',async(req,res)=>{await getSavedProject(req.params.id);admitAssembly(req.params.id);res.status(202).json(await textJobs.start(req.params.id,req.body));});
+  app.get('/api/projects/:id/assembly/text-jobs/:runId',async(req,res)=>res.json(await textJobs.get(req.params.id,req.params.runId)));
+  app.post('/api/projects/:id/assembly/text-jobs/:runId/cancel',async(req,res)=>res.json(await textJobs.cancel(req.params.id,req.params.runId)));
+  app.get('/api/projects/:id/assembly/text-jobs/:runId/files/:name',async(req,res)=>res.attachment(req.params.name).sendFile(await textJobs.file(req.params.id,req.params.runId,req.params.name)));
+  app.post('/api/projects/:id/assembly/text-environments',async(req,res,next)=>{try{const id=String(req.params.id);await getSavedProject(id);admitAssembly(id);uploadingMedia.add(id);const cleanup=()=>{uploadingMedia.delete(id);const file=mediaPaths.get(req);if(file)void unlink(file).catch(()=>{});};res.on('finish',cleanup);res.on('close',cleanup);next();}catch(e){next(e);}},mediaUpload.single('file'),async(req,res)=>{if(!req.file)throw new HttpError(400,'Choose a local HDR file.');res.status(201).json(await importTextHdr(dataRoot,String(req.params.id),req.file.path,req.file.originalname));});
+  app.get('/api/projects/:id/assembly/text-environments/:assetId',async(req,res)=>{await getSavedProject(req.params.id);res.type('application/octet-stream').sendFile(await textHdrFile(dataRoot,req.params.id,req.params.assetId));});
 
   app.post('/api/projects/import', async (req, res) => {
     const errors = validateProject(req.body);

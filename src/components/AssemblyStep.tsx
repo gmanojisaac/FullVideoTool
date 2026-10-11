@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { request, jsonOptions, type SavedProject } from '../api';
 import type { Project } from '../../shared/project';
 import type { OutputFormat } from '../../shared/layout';
 import { calculateLessonTimeline, validateAssemblyConfig, type AssemblyConfig, type AssemblyState, type AssemblyTileSettings, type AssemblyJob, type ImportedMedia, type LessonTimeline } from '../../shared/assembly';
+import { emptyTextTrack } from '../../shared/text-effects';
+const TextEffectsPanel=lazy(()=>import('./TextEffectsPanel'));
 
 interface Props { project: Project|null; projects: SavedProject[]; sourceKey?: string; externalBusy: boolean; onRunningChange: (value:boolean)=>void; onProjectChange: (id:string)=>void }
 export default function AssemblyStep({project,projects,sourceKey,externalBusy,onRunningChange,onProjectChange}:Props) {
   const id=project?.id, [state,setState]=useState<AssemblyState|null>(null),[draft,setDraft]=useState<AssemblyConfig|null>(null),[format,setFormat]=useState<OutputFormat>('mobile'),[selected,setSelected]=useState(1),[dirty,setDirty]=useState(false),[working,setWorking]=useState(''),[error,setError]=useState(''),[checks,setChecks]=useState<{passed:number;total:number;timestamp:string;results:{name:string;status:string;detail:string}[]}|null>(null);
   const uploadAbort=useRef<AbortController|null>(null), callback=useRef(onRunningChange);callback.current=onRunningChange;
-  const running=!!working||state?.job?.status==='running', locked=running||externalBusy;
+  const [showText,setShowText]=useState(false);
+  const [textRunning,setTextRunning]=useState(false);
+  const running=!!working||textRunning||state?.job?.status==='running', locked=running||externalBusy;
   useEffect(()=>{callback.current(!!running);return()=>callback.current(false);},[running]);
   useEffect(()=>{if(state&&state.config.projectId===id&&state.source&&state.source.frames.updatedAt===sourceKey)return;const c=new AbortController();setState(null);setDraft(null);setError('');setDirty(false);if(id)void request<AssemblyState>(`/api/projects/${id}/assembly`,{signal:c.signal}).then(s=>{if(!c.signal.aborted){setState(s);setDraft(s.config);}}).catch(e=>{if(!c.signal.aborted)setError(e.message);});return()=>c.abort();},[id,sourceKey]);
   useEffect(()=>{const c=new AbortController();void request<typeof checks>('/api/checks/module10/latest',{signal:c.signal}).then(setChecks).catch(()=>{});return()=>c.abort();},[]);
@@ -33,6 +37,8 @@ export default function AssemblyStep({project,projects,sourceKey,externalBusy,on
       <div className="assembly-holds">{(['intro','intermediate','outro'] as const).map(k=><label key={k}>{k==='intro'?'Intro grid hold':k==='outro'?'Final grid hold':'Intermediate grid hold'} (s)<input type="number" min="0" max="30" step=".1" disabled={locked} value={draft[format][k]} onChange={e=>{setDraft({...draft,[format]:{...draft[format],[k]:Number(e.target.value)}});setDirty(true);}}/></label>)}</div>
       <p className="assembly-estimate">{timeline?`Predicted ${format} duration: ${timeline.duration.toFixed(3)} seconds · ${timeline.totalFrames} frames`:'Resolve the listed inputs to calculate the complete duration.'} · 30 fps / 48 kHz</p>
       {timeline?<div className="lesson-timeline" aria-label="Complete lesson timeline">{timeline.segments.map(s=><div key={s.id} className={`timeline-segment ${s.type}`} style={{flexGrow:s.duration}} title={`${s.start.toFixed(3)}–${s.end.toFixed(3)}s; frames ${s.startFrame}–${s.endFrame-1}`}><strong>{s.type}{s.tileNumber?` · ${s.tileNumber}`:''}</strong><span>{s.duration.toFixed(3)}s</span></div>)}</div>:null}
+      <div className="stage-actions"><button className="button secondary" aria-expanded={showText} disabled={textRunning} onClick={()=>setShowText(v=>!v)}>3D Text Effects</button><span>{draft.textEffects?.objects.length||0} optional text overlays</span></div>
+      {showText?<Suspense fallback={<p>Loading local text editor…</p>}><TextEffectsPanel key={id} track={draft.textEffects||emptyTextTrack()} format={format} projectId={id} revision={draft.revision} onRunning={setTextRunning} timeline={timeline} locked={locked} dirty={dirty} onChange={track=>{setDraft(c=>c?{...c,textEffects:track}:c);setDirty(true);}} onSave={()=>{setWorking('Saving text effects…');void save().catch(e=>setError(e.message)).finally(()=>setWorking(''));}} onPreparePreview={()=>void run([format],'preview','base-preview')} baseVideo={state.manifest?.textComposited===false&&state.manifest.scope!=='tile'?state.manifest.outputs.find(o=>o.format===format)?.playbackUrl:undefined} baseKey={JSON.stringify([format,draft[format],state.media,state.source?.animation.renderId])} imageUrl={state.source?.layout.outputs[format].imageUrl}/></Suspense>:null}
       {missing.length?<div className="assembly-missing" role="status">{missing.map(m=><p key={m}>{m}</p>)}</div>:null}
       <div className="assembly-tiles">{draft[format].tiles.map(t=>{const v=state.media.videos.find(v=>v.format===format&&v.tileNumber===t.tileNumber),a=state.media.audio.find(a=>a.tileNumber===t.tileNumber);let row:LessonTimeline|null=null;if(state.source)try{row=calculateLessonTimeline(state.source,draft,state.media,format,t.tileNumber);}catch{}return <article key={t.tileNumber} className={selected===t.tileNumber?'selected':''}>
         <button className="text-button" disabled={locked} aria-pressed={selected===t.tileNumber} onClick={()=>setSelected(t.tileNumber)}>Tile {t.tileNumber}</button>
