@@ -1,6 +1,6 @@
 # Release notes — 13 October 2026
 
-Covers the work done on 12–13 October 2026 on top of Release 2.0.0. These changes are on branch `feature/prompts-narration-cinematic-camera` and are **not tagged or versioned**; `package.json` still reports 2.0.0.
+Covers the work done on 12–13 October 2026 on top of Release 2.0.0, in two commits on branch `feature/prompts-narration-cinematic-camera` (pull request #1): the first commit (`64951fa`, earlier on 13 October) and a follow-up commit (cinematic camera v2, later on 13 October, described at the end). Nothing is tagged or versioned; `package.json` still reports 2.0.0.
 
 ## Summary
 
@@ -68,3 +68,18 @@ All 12 framing views were switched to *Reframed Detail* so the first frame given
 **New:** `shared/prompts.ts`, `shared/narration.ts`, `shared/cinematic.ts`, `server/prompts.ts`, `server/narration.ts`, `server/load-env.ts`, `server/cinematic-browser.ts`, `server/cinematic-render.ts`, `src/components/MotionPromptStep.tsx`, `src/components/NarrationStep.tsx`, `tests/prompts.test.ts`, `tests/narration.test.ts`, `tests/cinematic.test.ts`, `.env.example`, this file.
 
 **Modified:** `server/app.ts`, `server/assets.ts`, `server/export-validation.ts`, `server/assembly-render.ts`, `server/index.ts`, `scripts/dev.ts`, `shared/export.ts`, `shared/assembly.ts`, `src/App.tsx`, `src/components/AssemblyStep.tsx`, `src/styles.css`, `package.json`, `.gitignore`, `README.md`, `USER_WORKFLOW.md`.
+
+## Later on 13 October — cinematic camera v2 (follow-up commit)
+
+Built on the optional Three.js camera from the first commit, after reviewing a rendered reel frame by frame.
+
+- **Presets and settings:** seven presets (Classic arc, Gentle drift, Documentary, Cinematic orbit, Dramatic crane, Dutch whip, Dreamy glow) and 14 validated sliders plus an easing choice, shown in Step 10 when *Cinematic* is selected. Stored as optional `AssemblyConfig.cinematic`; part of the segment cache key.
+- **New effects:** orbit, crane tilt, dutch roll, overshoot-and-settle, five easings, background depth-of-field, motion blur by sub-frame accumulation, vignette, warm grade, contrast and a light sweep across the lifted tile. Every effect is exactly zero at both ends of the move.
+- **Detail landing:** for Reframed Detail views Three.js now renders the handoff itself (camera slides to the tile centre while the grid fades to the padding colour), replacing the classic cross-dissolve's double exposure. Applied only when the detail scale equals native scale × FIT factor; otherwise the classic dissolve is kept.
+- **Adaptive motion blur:** 2–24 samples chosen from on-screen speed, replacing a fixed 5 that produced stepped ghost copies in fast moves.
+- **Review reel:** `scripts/cinematic-showreel.ts` renders every preset on one tile with captions (7 presets, 651 frames, 21.7 s, written to a git-ignored `output/`). Reviewed frame by frame; the two defects it exposed (stepped motion blur, ghost dissolve) were fixed and re-rendered.
+- **Files:** new `src/components/CinematicControls.tsx`, `scripts/cinematic-showreel.ts`; changed `shared/cinematic.ts`, `shared/assembly.ts`, `server/cinematic-browser.ts`, `server/cinematic-render.ts`, `server/assembly-render.ts`, `src/components/AssemblyStep.tsx`, `src/styles.css`, `tests/cinematic.test.ts`.
+- **Not yet applied to the sample lesson videos:** those renders still use the first-commit camera; re-rendering with a chosen preset is a separate, longer run.
+- **Tests:** 40/40 unit tests pass (+5 camera tests). Type-check clean.
+- **Costs:** about 0.5–2.5 min per transition at 1080p with the software renderer; heavy presets take about 40 min for a full two-format lesson.
+- **Open:** judged from frames rather than watched in motion; faint card-edge line and brief gutter fragments under heavy blur; tile-to-tile travel not built.
