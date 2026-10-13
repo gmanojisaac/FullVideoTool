@@ -9,7 +9,7 @@ import { detectVideoTools, captureProcess } from './video-tools.js';
 import { cameraGeometryMatches, decodeDisplayedRgb, probeFrameSource, verifyPngAgainstVideo } from './frame-decode.js';
 import { hashFile, safeZipPath, type PackageFile } from './export-zip.js';
 
-export const exportFingerprint = (c: ExportContext) => createHash('sha256').update(JSON.stringify({ project: c.project, extraction: c.extraction.extractionId, layout: c.layout.generationId, focus: c.focus, animation: c.animation.renderId, frames: c.frames })).digest('hex');
+export const exportFingerprint = (c: ExportContext) => createHash('sha256').update(JSON.stringify({ project: c.project, extraction: c.extraction.extractionId, layout: c.layout.generationId, focus: c.focus, animation: c.animation.renderId, frames: c.frames, prompts: c.prompts })).digest('hex');
 export function fileWithin(base: string, relative: string) { safeZipPath(relative); const absolute = path.resolve(base, relative); if (!absolute.startsWith(path.resolve(base) + path.sep)) throw new Error('Asset path escapes its project.'); return absolute; }
 export function bufferFile(name: string, bytes: Uint8Array, category = 'metadata', module = 7): PackageFile { return { bytes, entry: { path: safeZipPath(name), size: bytes.byteLength, sha256: createHash('sha256').update(bytes).digest('hex'), category, module, mandatory: true, validation: 'PASS' } }; }
 export const jsonFile = (name: string, value: unknown, module = 7) => bufferFile(name, Buffer.from(JSON.stringify(value, null, 2) + '\n'), 'metadata', module);
@@ -71,5 +71,6 @@ export async function collectValidatedFiles(dataRoot: string, c: ExportContext, 
   for (const [name, filename, expected, module] of metadata) await check('metadata/' + name, async () => { const saved = JSON.parse(await readFile(filename, 'utf8')); if (!isDeepStrictEqual(saved, expected)) throw new Error('Stored metadata differs from the current approved snapshot.'); await add(filename, 'metadata/' + name, 'metadata', module, undefined); });
   files.push(jsonFile('metadata/tiles_geometry.json', { version: 1, sourceCoordinateSpace: 'EXIF-oriented original pixels; integer, half-open rectangles', sourcePanels: c.project.panels, tiles: c.extraction.tiles.map(t => ({ number: t.number, crop: t.crop })), grids: Object.fromEntries(outputFormats.map(f => [f, c.layout.outputs[f].geometry])), cameraConvention: 'Uniform scale plus translation: viewport = source * scale + translation. Pixel centres at x+0.5,y+0.5; normalized focal = source focal/source dimensions. Tile coordinates start at crop origin. Saved focus transforms are authoritative.' }));
   const instructions = exportInstructions(c, settings); files.push(bufferFile('README_CLIPCHAMP.txt', Buffer.from(instructions.clipchamp), 'instructions'), bufferFile('README_GEMINI.txt', Buffer.from(instructions.gemini), 'instructions'));
+  if (c.prompts) files.push(bufferFile('prompts/gemini_motion_prompts.txt', Buffer.from(c.prompts), 'instructions', 8));
   return { files, report };
 }

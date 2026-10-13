@@ -11,6 +11,9 @@ import { fileWithin } from './export-validation.js';
 import { assemblyRoot, normalizeVideoFilter } from './assembly-media.js';
 import { assemblyVideoArguments, prepareAssemblyLoop } from './assembly-quality.js';
 import { renderTextLayer, compositeText } from './text-render.js';
+import { renderCinematicClip } from './cinematic-render.js';
+import { cinematicVersion } from '../shared/cinematic.js';
+import { frameCount, timingFor } from '../shared/animation.js';
 import { outputSpec, type OutputFormat } from '../shared/layout.js';
 import { calculateLessonTimeline, type AssemblySource, type AssemblyConfig, type AssemblyMedia, type LessonTimeline, type LessonSegment, type LessonRenderManifest, type FinalVideo } from '../shared/assembly.js';
 
@@ -51,7 +54,14 @@ export async function renderLesson(task: AssemblyRenderTask, signal: AbortSignal
       signal.throwIfAborted(); const n = segment.tileNumber, settings = n ? config[format].tiles.find(t => t.tileNumber === n)! : null;
       if (segment.type === 'zoom-in' || segment.type === 'zoom-out') {
         const clip = source.animation.videos.find(v => v.format === format && v.tileNumber === n && v.kind === (segment.type === 'zoom-in' ? 'in' : 'out'))!, file = fileWithin(path.join(dataRoot, 'exports', projectId, 'animation-runs', source.animation.renderId), clip.relativePath); if (await hashFile(file, signal) !== clip.sha256) throw new Error(`Camera transition checksum changed: ${clip.filename}`);
-        await cached(segment, clip.sha256, async output => { if (scope !== 'preview') await copyFile(file, output); else await captureProcess(tools.ffmpeg!, [...common, '-i', file, '-vf', normalizeVideoFilter(dimensions.width, dimensions.height), ...assemblyVideoArguments(output, segment.frameCount, true)], signal, 1024); });
+        const useThree = config.cameraEngine === 'three';
+        await cached(segment, clip.sha256, async output => {
+          if (useThree) {
+            const view = source.animation.focusConfig.views.find(v => v.format === format && v.tileNumber === n)!, t = view.nativeTransform, timing = timingFor(source.animation.settings, n!), grid = source.layout.outputs[format];
+            const gridFile = fileWithin(path.join(dataRoot, 'exports', projectId, 'layout-runs', source.layout.generationId), `layouts/${grid.filename}`); if (await hashFile(gridFile, signal) !== grid.pngSha256) throw new Error('Grid image changed.');
+            await renderCinematicClip({ ffmpeg: tools.ffmpeg!, gridFile, classicClip: file, output, gridWidth: t.sourceWidth, gridHeight: t.sourceHeight, tile: t.selectedTileRectangle, dimensions, background: t.paddingColor, direction: segment.type === 'zoom-in' ? 'in' : 'out', zoomFrames: frameCount(segment.type === 'zoom-in' ? timing.zoomIn : timing.zoomOut), totalFrames: segment.frameCount, endScale: t.scale, endFocal: t.focalPoint }, signal);
+          } else if (scope !== 'preview') await copyFile(file, output); else await captureProcess(tools.ffmpeg!, [...common, '-i', file, '-vf', normalizeVideoFilter(dimensions.width, dimensions.height), ...assemblyVideoArguments(output, segment.frameCount, true)], signal, 1024);
+        }, useThree ? { camera: cinematicVersion } : null);
       } else if (segment.type !== 'motion' || settings!.stillFallback) {
         const png = segment.type === 'motion' ? source.frames.frames.find(f => f.format === format && f.tileNumber === n)! : null, grid = source.layout.outputs[format], file = png ? fileWithin(path.join(dataRoot, 'exports', projectId, 'frame-runs', source.frames.generationId), png.relativePath) : fileWithin(path.join(dataRoot, 'exports', projectId, 'layout-runs', source.layout.generationId), `layouts/${grid.filename}`), expected = png ? png.pngFileSha256 : grid.pngSha256; if (await hashFile(file, signal) !== expected) throw new Error('Grid or authoritative image changed.');
         await cached(segment, expected, output => captureProcess(tools.ffmpeg!, [...common, '-loop', '1', '-framerate', '30', '-i', file, '-vf', normalizeVideoFilter(dimensions.width, dimensions.height), ...assemblyVideoArguments(output, segment.frameCount, scope === 'preview')], signal, 1024).then(() => {}));

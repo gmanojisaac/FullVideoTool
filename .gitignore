@@ -16,3 +16,6 @@ coverage/
 !.env.example
 *.tsbuildinfo
 *.log
+
+# Generated deliverables (large videos)
+output/

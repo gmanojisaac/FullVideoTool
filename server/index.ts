@@ -1,3 +1,4 @@
+import './load-env.js';
 import path from 'node:path';
 import express from 'express';
 import { createApp, root } from './app.js';

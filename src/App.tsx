@@ -10,6 +10,8 @@ import AnimationStep from './components/AnimationStep';
 import FrameStep from './components/FrameStep';
 import ExportStep from './components/ExportStep';
 import AssemblyStep from './components/AssemblyStep';
+import MotionPromptStep from './components/MotionPromptStep';
+import NarrationStep from './components/NarrationStep';
 import ProjectManager from './components/ProjectManager';
 import AssetDashboard from './components/AssetDashboard';
 import RenderQueue from './components/RenderQueue';
@@ -31,7 +33,7 @@ export default function App() {
   const [animationRunning, setAnimationRunning] = useState(false);
   const [frameRunning, setFrameRunning] = useState(false);
   const [exportRunning, setExportRunning] = useState(false);
-  const [assemblyRunning, setAssemblyRunning] = useState(false);
+  const [assemblyRunning, setAssemblyRunning] = useState(false), [narrationRunning, setNarrationRunning] = useState(false), [narrationStamp, setNarrationStamp] = useState(0);
   const [animationManifest, setAnimationManifest] = useState<AnimationManifest | null>(null);
   const [frameReport, setFrameReport] = useState<FrameValidationReport | null>(null);
   const [focusConfig, setFocusConfig] = useState<FocusConfig | null>(null);
@@ -240,9 +242,10 @@ export default function App() {
       <FocusStep project={project} source={extractionManifest} layout={layoutManifest} dirty={dirty} externalBusy={!!operation || extractionRunning || gridRunning || animationRunning || frameRunning || exportRunning || assemblyRunning} onRunningChange={setFocusRunning} onConfigChange={setFocusConfig}/>
       <AnimationStep config={dirty ? null : focusConfig} externalBusy={!!operation || extractionRunning || gridRunning || focusRunning || frameRunning || exportRunning || assemblyRunning} onRunningChange={setAnimationRunning} onManifestChange={setAnimationManifest}/>
       <FrameStep source={animationManifest} externalBusy={!!operation || extractionRunning || gridRunning || focusRunning || animationRunning || exportRunning || assemblyRunning} onRunningChange={setFrameRunning} onReportChange={setFrameReport}/>
-      <section className="stage-card" id="gemini-motion"><h2>Step 8 — Gemini Emotional Motion</h2><p>The remainder of your Module 8 specification is pending. Verified first-frame images are ready for manual Gemini handoff; prompt editing has not been implemented yet.</p></section>
+      <MotionPromptStep project={project&&!dirty?project:null} frames={dirty?null:frameReport} externalBusy={!!operation||extractionRunning||gridRunning||focusRunning||animationRunning||frameRunning||exportRunning||assemblyRunning}/>
       <ExportStep project={project} frames={dirty ? null : frameReport} externalBusy={!!operation || extractionRunning || gridRunning || focusRunning || animationRunning || frameRunning || assemblyRunning} onRunningChange={setExportRunning}/>
-      <AssemblyStep project={project&&!dirty?project:null} projects={savedProjects} sourceKey={frameReport?.updatedAt} externalBusy={!!operation||extractionRunning||gridRunning||focusRunning||animationRunning||frameRunning||exportRunning} onRunningChange={setAssemblyRunning} onProjectChange={reopen}/>
+      <NarrationStep project={project&&!dirty?project:null} externalBusy={!!operation||extractionRunning||gridRunning||focusRunning||animationRunning||frameRunning||exportRunning||assemblyRunning} onGenerated={()=>setNarrationStamp(Date.now())} onRunningChange={setNarrationRunning}/>
+      <AssemblyStep project={project&&!dirty?project:null} projects={savedProjects} sourceKey={`${frameReport?.updatedAt}|${narrationStamp}`} externalBusy={!!operation||extractionRunning||gridRunning||focusRunning||animationRunning||frameRunning||exportRunning||narrationRunning} onRunningChange={setAssemblyRunning} onProjectChange={reopen}/>
       <div className="stage-actions"><button className="button secondary" disabled={activeStage <= 1} onClick={() => navigate(activeStage - 1)}>Previous stage</button><button className="button secondary" disabled={!project || !!busy || errors.length > 0} onClick={() => void save()}>Save changes</button><button className="button primary" disabled={activeStage >= 10 || !allowed[activeStage]} onClick={() => navigate(activeStage + 1)}>Next stage</button></div>
       <AssetDashboard projectId={project && !dirty ? project.id : undefined} refreshKey={[project?.updatedAt, extractionManifest?.extractionId, layoutManifest?.generationId, focusConfig?.revision, animationManifest?.renderId, frameReport?.updatedAt, exportRunning, assemblyRunning].join(':')}/>
       <section className="test-card" aria-label="Module 1 tests"><div className="test-card-heading"><div><span className="eyebrow">THE CONFIDENCE CHECK</span><h2><Icon name="flask" size={21}/> Module 1 test bench</h2><p>The supplied comic, both layouts, and the full save–reload flow.</p></div><div className="test-actions">{report ? <span className={`test-total ${report.passed !== report.total ? 'failed' : ''}`}>{report.passed}/{report.total} PASS</span> : null}<button className="button secondary" disabled={checking} onClick={() => void runChecks()}><Icon name={checking ? 'refresh' : 'check'}/>{checking ? 'Running checks…' : 'Run checks'}</button></div></div>

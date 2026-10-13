@@ -6,7 +6,7 @@ import type { AnimationManifest } from './animation';
 import type { FrameValidationReport } from './frames';
 
 export type ExportScope = 'complete' | OutputFormat;
-export interface ExportContext { project: Project; extraction: ExtractionManifest; layout: LayoutManifest; focus: FocusConfig; animation: AnimationManifest; frames: FrameValidationReport }
+export interface ExportContext { project: Project; extraction: ExtractionManifest; layout: LayoutManifest; focus: FocusConfig; animation: AnimationManifest; frames: FrameValidationReport; prompts?: string }
 export interface ExportSettings { version: 1; projectName: string; lessonTitle: string }
 export interface ExportEntry { path: string; category: string; module: number; size: number; sha256: string; resolution?: { width: number; height: number }; duration?: number; tileNumber?: number; format?: OutputFormat; mandatory: boolean; validation: 'PASS'; sourceFilename?: string }
 export interface ExportValidation { timestamp: string; scope: ExportScope; status: 'PASS' | 'FAIL'; results: { filename: string; status: 'PASS' | 'FAIL' | 'SKIPPED'; reason: string }[]; warnings: string[] }
