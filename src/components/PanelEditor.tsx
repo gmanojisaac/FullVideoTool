@@ -1,3 +1,4 @@
+import { apiUrl } from '../urls';
 import { useRef, type PointerEvent, type KeyboardEvent } from 'react';
 import { dimensions, moveGridEdge, type Panel, type Project } from '../../shared/project';
 
@@ -57,7 +58,7 @@ export default function PanelEditor({ project, selected, guides, mode, disabled,
       width={(axis === 'x' ? 6 : 30) * scale} height={(axis === 'x' ? 30 : 6) * scale} rx={3 * scale} className="edge-grip" pointerEvents="none" />
   </g>;
   return <div className="comic-stage" style={{ aspectRatio: `${width} / ${height}`, width: `min(100%, ${730 * width / height}px)` }}>
-    <img src={project.input.imageUrl} alt={`Uploaded comic: ${project.input.filename}`} draggable={false} />
+    <img src={apiUrl(project.input.imageUrl)} alt={`Uploaded comic: ${project.input.filename}`} draggable={false} />
     {guides ? <svg ref={svgRef} className={`panel-overlay ${disabled ? 'locked' : ''}`} viewBox={`0 0 ${width} ${height}`}
       aria-label="Comic panel boundary editor" onPointerMove={move} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }} onLostPointerCapture={() => { drag.current = null; }}>
       {project.panels.map(p => <g key={p.id}>

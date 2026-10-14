@@ -6,6 +6,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, readdir, writeFile, unlink } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { detectLayout } from './detection.js';
+import { editorCors } from './editor-cors.js';
 import { atomicJson, readJson } from './storage.js';
 import { runDiagnostics } from './checks.js';
 import { createExtractionJobs } from './extraction-jobs.js';
@@ -81,14 +82,8 @@ export function createApp(dataRoot = path.join(root, 'data'), diagnostics = true
   const mediaUpload = multer({ storage: multer.diskStorage({ destination: (_req,_file,cb) => { const folder=path.join(dataRoot,'.uploads'); void mkdir(folder,{recursive:true}).then(()=>cb(null,folder),e=>cb(e,'')); }, filename: (req,_file,cb) => { const name=randomUUID()+'.upload';mediaPaths.set(req,path.join(dataRoot,'.uploads',name));cb(null,name); } }), limits:{fileSize:512*1024*1024,files:1,fields:3} });
   function admitAssembly(id:string) { guardProject(id); if(queue.isRunning() || assembly.isRunning() || textJobs.isRunning() || uploadingMedia.size || [...processingProjects].some(p=>frames.isRunning(p)||packages.isRunning(p))) throw new HttpError(409,'Finish or cancel current video processing before lesson assembly.'); }
   app.disable('x-powered-by');
+  app.use('/api', editorCors());
   app.use(express.json({ limit: '1mb' }));
-  app.use('/api', (req, res, next) => {
-    // This service is local. Browser writes are restricted to its own frontend origins.
-    const origin = req.get('origin');
-    if (origin && !/^http:\/\/(localhost|127\.0\.0\.1):(5173|3001)$/.test(origin)) return res.status(403).json({ error: 'Only the local editor can access this service.' });
-    res.setHeader('Cache-Control', 'no-store');
-    next();
-  });
 
   async function getInput(id: unknown) {
     if (!validId(id)) throw new HttpError(400, 'Invalid image ID.');

@@ -1,3 +1,4 @@
+import { apiUrl } from '../urls';
 import { useEffect, useState } from 'react';
 import type { Project } from '../../shared/project';
 import type { FrameValidationReport } from '../../shared/frames';
@@ -31,7 +32,7 @@ export default function MotionPromptStep({ project, frames, externalBusy }: Prop
       <div className="prompt-grid">
         {set.tiles.map(t => { const f = frameFor(t.tileNumber); return <article className="prompt-card" key={t.tileNumber}>
           <header><strong>Tile {String(t.tileNumber).padStart(2, '0')}</strong><span className={`test-status ${f ? 'pass' : 'pending'}`}>{f ? 'FIRST FRAME READY' : 'NO VERIFIED FRAME'}</span></header>
-          {f ? <img className="prompt-thumb" alt={`Tile ${t.tileNumber} Gemini first frame`} src={f.downloadUrl}/> : null}
+          {f ? <img className="prompt-thumb" alt={`Tile ${t.tileNumber} Gemini first frame`} src={apiUrl(f.downloadUrl)}/> : null}
           <label>Motion description<textarea aria-label={`Tile ${t.tileNumber} motion description`} rows={4} maxLength={maxMotionLength} value={t.motion} disabled={busy || externalBusy} onChange={e => edit(t.tileNumber, e.target.value)}/></label>
           <div className="prompt-actions"><small>{t.motion.length}/{maxMotionLength}</small>
             <button className="button secondary" type="button" onClick={() => edit(t.tileNumber, defaultPromptSet('').tiles[t.tileNumber - 1].motion)} disabled={busy || externalBusy}>Reset</button>
@@ -43,7 +44,7 @@ export default function MotionPromptStep({ project, frames, externalBusy }: Prop
       {notice ? <div className="message success" role="status">{notice}</div> : null}
       <div className="stage-actions">
         <button className="button primary" onClick={() => void save()} disabled={!dirty || !!errors.length || busy || externalBusy}>{busy ? 'Saving…' : 'Save prompts'}</button>
-        {saved && id ? <a className="button secondary" href={`/api/projects/${id}/motion-prompts.txt`} download>Download all prompts (.txt)</a> : null}
+        {saved && id ? <a className="button secondary" href={apiUrl(`/api/projects/${id}/motion-prompts.txt`)} download>Download all prompts (.txt)</a> : null}
         <span className="muted">{saved ? (dirty ? 'Unsaved edits.' : 'Saved.') : 'Not saved yet — defaults shown.'}</span>
       </div>
     </>}

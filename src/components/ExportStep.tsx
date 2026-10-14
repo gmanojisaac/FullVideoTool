@@ -1,3 +1,4 @@
+import { apiUrl } from '../urls';
 import { useEffect, useRef, useState } from 'react';
 import type { Project } from '../../shared/project';
 import type { FrameValidationReport } from '../../shared/frames';
@@ -39,7 +40,7 @@ export default function ExportStep({ project, frames, externalBusy, onRunningCha
     {error || state?.job?.error ? <div className="message error" role="alert"><pre>{error || state?.job?.error}</pre></div> : null}
     {state?.job ? <div role="status"><p>{state.job.message}</p><progress value={state.job.progress} max={100}/><span> {state.job.progress}%</span></div> : null}
     <div className="stage-actions"><button className="button secondary" onClick={() => document.getElementById('gemini-first-frames')?.scrollIntoView()}>Previous</button>{(['mobile', 'desktop', 'complete'] as const).map(scope => <button className="button primary" key={scope} disabled={!ready || running || externalBusy} onClick={() => void start(scope)}>{scope === 'complete' ? 'Export Complete Package' : `Export Selected ${scope === 'mobile' ? 'Mobile' : 'Desktop'} Assets`}</button>)}{running ? <button className="button secondary" disabled={starting || state?.job?.status !== 'running'} onClick={() => void cancel()}>Cancel export</button> : null}</div>
-    {state?.receipt ? <div className="stage-actions"><a className="button primary" href={state.receipt.downloadUrl}>Download ZIP{state.current ? '' : ' (previous run)'}</a><a className="button secondary" href={state.receipt.manifestUrl}>View Export Manifest</a><a className="button secondary" href={state.receipt.receiptUrl}>Download verification receipt</a></div> : null}
+    {state?.receipt ? <div className="stage-actions"><a className="button primary" href={apiUrl(state.receipt.downloadUrl)}>Download ZIP{state.current ? '' : ' (previous run)'}</a><a className="button secondary" href={apiUrl(state.receipt.manifestUrl)}>View Export Manifest</a><a className="button secondary" href={apiUrl(state.receipt.receiptUrl)}>Download verification receipt</a></div> : null}
     <button className="text-button" disabled={!ready} onClick={() => void showInstructions()}>View Clipchamp Instructions / View Gemini Instructions</button>
     {instructions ? <div className="export-summaries"><details open><summary>Clipchamp Instructions</summary><pre className="instruction-text">{instructions.clipchamp}</pre></details><details open><summary>Gemini Instructions</summary><pre className="instruction-text">{instructions.gemini}</pre></details></div> : null}
     {state?.job?.validation ? <details><summary>Current validation: {state.job.validation.status}</summary>{state.job.validation.results.map(r => <p key={r.filename}><strong>{r.status}</strong> {r.filename} — {r.reason}</p>)}</details> : null}

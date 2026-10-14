@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { jsonOptions, request, uploadImage, type CheckReport, type SavedProject } from './api';
+import { apiBaseUrl, apiUrl } from './urls';
 import { dimensions, layoutLabel, moveGridEdge, validId, validateProject, type Layout, type Panel, type Project } from '../shared/project';
 import Icon from './components/Icon';
 import PanelEditor from './components/PanelEditor';
@@ -107,7 +108,7 @@ export default function App() {
   }
   function sample(filename: string, type: string) {
     void work('Loading sample…', async () => {
-      const response = await fetch(`/api/fixtures/${filename}`);
+      const response = await fetch(apiUrl(`/api/fixtures/${filename}`));
       if (!response.ok) throw new Error('Fixture missing. Run npm run fixtures first.');
       const file = new File([await response.blob()], filename, { type });
       activate(await uploadImage(file), 'Sample loaded. Drag a guide to refine its boundaries.', true);
@@ -174,6 +175,7 @@ export default function App() {
     </header>
     <nav className="workspace-nav workflow-navigation" aria-label="Lesson workflow">{stageLabels.map((label, i) => <button key={label} className={activeStage === i + 1 ? 'nav-active' : 'nav-step'} aria-current={activeStage === i + 1 ? 'step' : undefined} disabled={!allowed[i]} onClick={() => navigate(i + 1)}><span className="step-number">{String(i + 1).padStart(2, '0')}</span>{label}<small>{completion[i] ? 'Ready' : allowed[i] ? 'Review' : 'Missing'}</small></button>)}</nav>
     <main>
+      {apiBaseUrl && service !== 'online' ? <div className="message loading" role="status"><Icon name="info"/><div><strong>Connect this computer’s processing service.</strong><p>Keep the local processing service running. If your browser asks, allow this editor to connect to your computer.</p></div><button className="button secondary" disabled={service === 'checking'} onClick={() => { setService('checking'); void request('/api/health').then(() => { setService('online'); return request<SavedProject[]>('/api/projects'); }).then(setSavedProjects).catch(() => setService('offline')); }}>Reconnect</button></div> : null}
       <section className="page-intro" id="upload-comic">
         <div><div className="eyebrow">SIX PANELS. ONE STORY.</div><h1>Prepare your comic<span>.</span></h1><p>Bring your story in. Find each frame. Make the boundaries yours.</p></div>
         <div className="intro-actions"><button className="button secondary" onClick={() => jsonInput.current?.click()} disabled={!!busy}><Icon name="folder"/> Open JSON</button><button className="button primary" onClick={() => void save()} disabled={!project || !!busy || errors.length > 0}><Icon name="save"/> Save project</button></div>

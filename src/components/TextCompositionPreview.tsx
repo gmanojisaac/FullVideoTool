@@ -1,3 +1,4 @@
+import { apiUrl } from '../urls';
 import { useEffect, useRef } from 'react';
 import TextCanvas from './TextCanvas';
 import { displayedTextFrame, type TextEffect } from '../../shared/text-effects';
@@ -13,8 +14,8 @@ export default function TextCompositionPreview({objects,format,projectId,frame,o
   },[playing,videoUrl,checkerboard]);
   const width=format==='mobile'?360:640,height=format==='mobile'?640:360;
   return <div className={`text-composition ${checkerboard?'checkerboard':''}`} style={{aspectRatio:`${width}/${height}`,maxWidth:width}}>
-    {videoUrl&&!checkerboard?<video ref={video} src={videoUrl} playsInline controls preload="metadata" aria-label="Composition footage with synchronized narration" onPlay={()=>onPlaying(true)} onPause={()=>onPlaying(false)} onSeeked={e=>{const pending=pendingSeek.current,time=e.currentTarget.currentTime;pendingSeek.current=null;onFrame(pending!==null&&Math.abs(time*30-pending)<.1?pending:displayedTextFrame(time));}} onEnded={()=>onPlaying(false)}/>:null}
-    {!videoUrl&&imageUrl&&!checkerboard?<img src={imageUrl} alt="Current reconstructed grid"/>:null}
+    {videoUrl&&!checkerboard?<video ref={video} src={apiUrl(videoUrl)} playsInline controls preload="metadata" aria-label="Composition footage with synchronized narration" onPlay={()=>onPlaying(true)} onPause={()=>onPlaying(false)} onSeeked={e=>{const pending=pendingSeek.current,time=e.currentTarget.currentTime;pendingSeek.current=null;onFrame(pending!==null&&Math.abs(time*30-pending)<.1?pending:displayedTextFrame(time));}} onEnded={()=>onPlaying(false)}/>:null}
+    {!videoUrl&&imageUrl&&!checkerboard?<img src={apiUrl(imageUrl)} alt="Current reconstructed grid"/>:null}
     <TextCanvas objects={objects} frame={frame} width={width} height={height} quality={quality} projectId={projectId}/>
   </div>;
 }

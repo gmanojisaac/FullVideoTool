@@ -1,0 +1,14 @@
+.git/
+node_modules/
+dist/
+.env
+.env.*
+.tools/
+data/
+output/
+previews/
+test-results/
+playwright-report/
+remotion-poc/
+tests/fixtures/
+*.log

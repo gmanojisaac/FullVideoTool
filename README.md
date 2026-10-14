@@ -17,7 +17,15 @@ npm run dev
 
 Open **http://localhost:5173**. The API is **http://localhost:3001**. Ctrl+C stops both. If a PowerShell npm shim is blocked, use `node 'C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js' run dev`.
 
-Release **2.0.0** ships the source, locked dependency versions, fixtures and documentation, including cinematic 3D text effects. Local projects, render outputs, media imports, test logs and screenshots are generated on your computer and are excluded from Git. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for release scope and verified outcomes; [Release 1.0 notes](RELEASE_NOTES_1.0.md) retain the earlier release history.
+## Hosted editor with local processing
+
+The editor can be deployed to Vercel while uploads, projects, rendering, narration and media remain on the viewer's PC. Set `VITE_API_BASE_URL=http://127.0.0.1:3001` in the Vercel build environment. `vercel.json` deploys the Vite frontend only; it does not deploy the processing API.
+
+On the PC, set `ALLOWED_EDITOR_ORIGINS` in `.env` to the editor's exact HTTPS origin (for example `https://full-video-tool.vercel.app`, without a trailing slash). Multiple explicitly trusted origins may be separated by commas. Install the locked dependencies with `npm ci`, configure FFmpeg/FFprobe as above, and run `npm run server` or double-click `start-processing.bat`. The service listens on `127.0.0.1:3001` and must stay running while using the editor. Start it again after restarting the PC.
+
+Open the hosted editor on that same PC. If Chrome or Edge asks for access to the computer/local network, allow it for this editor; then use Reconnect if needed. An unrelated computer needs its own local service and origin configuration. API requests, uploaded images, previews, HDR assets and downloads connect directly from the browser to that local service; project JSON keeps portable relative media references. Arbitrary websites and unconfigured deployment origins are rejected by the local API.
+
+Release **4.0.0** adds the Vercel-hosted editor with local processing, media links, an explicit editor-origin allowlist, reconnection controls and a Windows processing launcher. It ships the source, locked dependency versions, fixtures and documentation, including cinematic 3D text effects. Local projects, render outputs, media imports, test logs and screenshots are generated on your computer and are excluded from Git. See [Release 4.0 notes](RELEASE_NOTES_4.0.md) for the current scope and verified outcomes; [earlier release notes](RELEASE_NOTES.md) retain the previous release history.
 
 For the built application:
 
@@ -26,7 +34,7 @@ npm run build
 npm start
 ```
 
-Open http://localhost:3001. `npm run server` starts only the API. There is no cloud deployment or user account.
+Open http://localhost:3001. `npm run server` starts only the API. The hosted editor is available at https://full-video-tool.vercel.app; processing and project storage stay on the PC. There is no application user account.
 
 ## Workflow
 

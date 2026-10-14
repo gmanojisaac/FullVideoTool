@@ -1,3 +1,4 @@
+import { apiUrl } from '../urls';
 import { useEffect, useRef, type PointerEvent, type KeyboardEvent } from 'react';
 import type { CameraSettings, CameraTransform } from '../../shared/focus';
 
@@ -53,7 +54,7 @@ export default function FocusCanvas({ transform: t, settings, imageUrl, safeArea
   const { width: w, height: h } = t.viewport;
   return <svg ref={svg} className={`focus-canvas ${disabled ? 'disabled' : ''}`} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Interactive camera framing. Drag to pan, wheel to zoom, arrow keys to move." tabIndex={disabled ? -1 : 0} onPointerDown={start} onPointerMove={move} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }} onKeyDown={key} data-scale={t.scale} data-translation-x={t.translation.x} data-translation-y={t.translation.y}>
     <rect width={w} height={h} fill={t.paddingColor}/>
-    <image href={imageUrl} width={t.sourceWidth} height={t.sourceHeight} transform={`matrix(${t.scale} 0 0 ${t.scale} ${t.translation.x} ${t.translation.y})`} preserveAspectRatio="none"/>
+    <image href={apiUrl(imageUrl)} width={t.sourceWidth} height={t.sourceHeight} transform={`matrix(${t.scale} 0 0 ${t.scale} ${t.translation.x} ${t.translation.y})`} preserveAspectRatio="none"/>
     {thirds ? <g className="focus-third-guides" pointerEvents="none">{[1, 2].map(i => <g key={i}><line x1={w * i / 3} x2={w * i / 3} y1={0} y2={h}/><line x1={0} x2={w} y1={h * i / 3} y2={h * i / 3}/></g>)}</g> : null}
     {safeArea ? <g className="focus-safe-guide" pointerEvents="none"><rect x={w * 0.08} y={h * 0.08} width={w * 0.84} height={h * 0.84}/><text x={w * 0.1} y={h * 0.11} fontSize={Math.min(w, h) * 0.023}>SAFE AREA · INSPECT SUBJECT MANUALLY</text></g> : null}
   </svg>;
