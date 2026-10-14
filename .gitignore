@@ -16,3 +16,11 @@ coverage/
 !.env.example
 *.tsbuildinfo
 *.log
+
+# Generated deliverables (large videos)
+output/
+
+# Remotion proof of concept: generated assets and renders (large)
+remotion-poc/out/
+remotion-poc/public/
+remotion-poc/public-mobile/

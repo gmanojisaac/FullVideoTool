@@ -1,3 +1,4 @@
+import '../server/load-env.js';
 import { createServer } from 'vite';
 import { createApp } from '../server/app.js';
 

@@ -4,7 +4,7 @@ Step 10 now includes an optional **3D Text Effects** editor with particle assemb
 
 A local React/TypeScript application for preparing six-panel Stitch comics, independent mobile and desktop camera videos, verified Gemini starting frames, Clipchamp asset packages and finished lessons assembled from imported video/narration. The existing Node/Express, Sharp and FFmpeg architecture is retained. Processing and project storage stay on this computer.
 
-Modules 1–7 and Module 10 are implemented. Project management, navigation, dependency status, an asset dashboard and a render queue from Module 9 are implemented. Module 8 is pending its remaining specification; Module 9 cannot yet meet its full acceptance. Actual test outcomes and limitations are recorded in TEST_REPORT.md.
+Modules 1–7 and Module 10 are implemented. Project management, navigation, dependency status, an asset dashboard and a render queue from Module 9 are implemented. Step 8 now provides editable per-tile Gemini motion prompts. An optional OpenAI narration voice and an optional Three.js cinematic camera were added on 13 October 2026; see [RELEASE_NOTES_2026-10-13.md](RELEASE_NOTES_2026-10-13.md). Module 9 cannot yet meet its full acceptance. Actual test outcomes and limitations are recorded in TEST_REPORT.md.
 
 ## Start on Windows
 
@@ -36,7 +36,7 @@ Use the ten-stage navigation and component save/generate controls. Dependencies 
 
 Input limits: one still image, 20 MB, 40 megapixels, at least 120×120. Detection uses gutters rather than aspect ratio alone; review uncertain results. FIT preserves artwork with padding; FILL discloses cropping. Camera transforms are saved in source/grid pixel coordinates and use the same deterministic sampler for preview and rendering. Native Camera stays on the grid; Reframed Detail uses an explicitly labelled controlled handoff. Semantic focal detection is currently a disclosed centre fallback requiring manual review.
 
-The frame PNG is extracted from the finished MP4, then checked against a second independent decode. Separate lossy zoom-out pixels can differ despite matching camera geometry. No external Gemini loop is guaranteed seamless. Prompt editing awaits the rest of Module 8. Step 10 accepts twelve external MP4/MOV/WebM loops and six shared MP3/WAV/M4A/AAC narrations, reviews continuity, repeats/trims loops to whole-frame audio coverage, and produces two H.264/AAC lesson MP4s plus editing assets. Missing media requires a deliberate still/silent override. See [MODULE_10.md](MODULE_10.md).
+The frame PNG is extracted from the finished MP4, then checked against a second independent decode. Separate lossy zoom-out pixels can differ despite matching camera geometry. No external Gemini loop is guaranteed seamless. Step 8 saves per-tile motion prompts that are bundled into the export. Step 10 accepts twelve external MP4/MOV/WebM loops and six shared MP3/WAV/M4A/AAC narrations, reviews continuity, repeats/trims loops to whole-frame audio coverage, and produces two H.264/AAC lesson MP4s plus editing assets. Missing media requires a deliberate still/silent override. See [MODULE_10.md](MODULE_10.md).
 
 ## Commands and tests
 

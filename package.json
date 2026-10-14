@@ -23,7 +23,7 @@
     "test:module5": "tsx --test tests/module-five.test.ts",
     "test:module6": "tsx --test tests/module-six.test.ts",
     "test:module7": "tsx --test tests/module-seven.test.ts",
-    "test:unit": "tsx --test --test-concurrency=1 tests/zip.test.ts tests/assembly-timeline.test.ts tests/assembly-jobs.test.ts tests/storage.test.ts tests/text-effects.test.ts",
+    "test:unit": "tsx --test --test-concurrency=1 tests/zip.test.ts tests/assembly-timeline.test.ts tests/assembly-jobs.test.ts tests/storage.test.ts tests/text-effects.test.ts tests/prompts.test.ts tests/narration.test.ts tests/cinematic.test.ts",
     "test:text": "tsx --test --test-concurrency=1 tests/text-effects.test.ts tests/text-render.test.ts tests/text-composition.test.ts",
     "test:module10": "tsx --test tests/module-ten.test.ts",
     "test:regression": "tsx --test --test-concurrency=1 tests/module-one.test.ts tests/module-two.test.ts tests/module-three.test.ts tests/module-four.test.ts tests/module-five.test.ts tests/module-six.test.ts tests/module-seven.test.ts tests/integration.test.ts tests/zip.test.ts tests/assembly-timeline.test.ts",

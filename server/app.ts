@@ -26,6 +26,9 @@ import { projectDashboard } from './assets.js';
 import { runExportDiagnostics } from './export-checks.js';
 import { createRenderQueue } from './render-queue.js';
 import { createAssemblyService } from './assembly.js';
+import { createPromptService } from './prompts.js';
+import { createNarrationService } from './narration.js';
+import { promptsText } from '../shared/prompts.js';
 import { createTextJobs } from './text-jobs.js';
 import { importTextHdr, textHdrFile } from './text-assets.js';
 import type { OutputFormat } from '../shared/layout.js';
@@ -59,12 +62,14 @@ export function createApp(dataRoot = path.join(root, 'data'), diagnostics = true
   const getExportContext = async (id: string): Promise<ExportContext> => {
     const project = await getSavedProject(id), context = await getFocusContext(id), config = (await focus.current(id)).config, state = await animations.current(id), camera = state.fullManifest || state.manifest, report = (await frames.current(id)).report;
     if (!camera || camera.request.scope !== 'all' || !report || report.animationRenderId !== camera.renderId) throw new HttpError(409, 'Render and verify all current camera assets before export.');
-    return { project, extraction: context.source, layout: context.layout, focus: config, animation: camera, frames: report };
+    return { project, extraction: context.source, layout: context.layout, focus: config, animation: camera, frames: report, prompts: await prompts.exportText(id, project.lessonTitle || project.title) };
   };
+  const prompts = createPromptService(dataRoot);
   const packages = createExportService(dataRoot, getExportContext);
   const assembly = createAssemblyService(dataRoot, async id => { const c = await getExportContext(id); return {layout:c.layout,animation:c.animation,frames:c.frames}; });
   const textJobs=createTextJobs(dataRoot,assembly.config);
   const uploadingMedia = new Set<string>();
+  const narration = createNarrationService(dataRoot, { importAudio: (id, tile, temporary, name, signal) => assembly.media.importFile(id, 'audio', tile, undefined, temporary, name, signal) });
   const processingProjects = new Set<string>();
   const queue = createRenderQueue(dataRoot, animations, () => assembly.isRunning() || textJobs.isRunning() || uploadingMedia.size > 0 || [...processingProjects].some(id => frames.isRunning(id) || packages.isRunning(id)));
   const guardPackage = (id: string) => { assembly.guard(id); if(textJobs.isRunning(id))throw new HttpError(409,'Wait or cancel text export before changing this project.'); if (uploadingMedia.has(id)) throw new HttpError(409,'Wait for the media upload to finish.'); if (packages.isRunning(id)) throw new HttpError(409, 'Wait or cancel packaging before changing this project.'); };
@@ -109,7 +114,7 @@ export function createApp(dataRoot = path.join(root, 'data'), diagnostics = true
     return project;
   }
 
-  app.get('/api/health', (_req, res) => res.json({ status: 'ok', module: 10, modules: [1, 2, 3, 4, 5, 6, 7, 10], integration: 'Module 9 partial; Module 8 specification pending' }));
+  app.get('/api/health', (_req, res) => res.json({ status: 'ok', module: 10, modules: [1, 2, 3, 4, 5, 6, 7, 10], integration: 'Module 9 partial; Module 8 prompt authoring implemented; Module 8 specification pending' }));
   app.get('/api/video-tools', async (_req, res) => res.json(await detectVideoTools()));
 
   app.post('/api/upload', upload.single('image'), async (req, res) => {
@@ -302,6 +307,16 @@ export function createApp(dataRoot = path.join(root, 'data'), diagnostics = true
   app.get('/api/projects/:id/exports/:runId', async (req, res) => { res.json(await packages.getJob(req.params.id, req.params.runId)); });
   app.post('/api/projects/:id/exports/:runId/cancel', async (req, res) => { res.json(await packages.cancel(req.params.id, req.params.runId)); });
   app.get('/api/projects/:id/exports/:runId/files/:name', async (req, res) => { res.attachment(req.params.name).sendFile(await packages.file(req.params.id, req.params.runId, req.params.name)); });
+  app.get('/api/projects/:id/motion-prompts', async (req, res) => { await getSavedProject(req.params.id); res.json(await prompts.current(req.params.id)); });
+  app.put('/api/projects/:id/motion-prompts', async (req, res) => { await getSavedProject(req.params.id); guardPackage(req.params.id); const prompts_ = await prompts.save(req.params.id, req.body); res.json({ prompts: prompts_, saved: true }); });
+  app.get('/api/projects/:id/motion-prompts.txt', async (req, res) => { const p = await getSavedProject(req.params.id), { prompts: set } = await prompts.current(req.params.id); res.type('text/plain').attachment('gemini_motion_prompts.txt').send(promptsText(set, p.lessonTitle || p.title)); });
+  app.get('/api/projects/:id/narration', async (req, res) => { await getSavedProject(req.params.id); res.json(await narration.current(req.params.id)); });
+  app.put('/api/projects/:id/narration', async (req, res) => { await getSavedProject(req.params.id); guardPackage(req.params.id); res.json(await narration.save(req.params.id, req.body)); });
+  app.post('/api/projects/:id/narration/generate', async (req, res) => {
+    const id = String(req.params.id); await getSavedProject(id); admitAssembly(id); uploadingMedia.add(id);
+    try { const tiles = Array.isArray(req.body?.tileNumbers) ? req.body.tileNumbers : [1, 2, 3, 4, 5, 6]; res.json({ generated: await narration.generate(id, tiles), state: await narration.current(id) }); }
+    finally { uploadingMedia.delete(id); }
+  });
   app.get('/api/projects/:id/export-instructions', async (req, res) => { res.json(exportInstructions(await getExportContext(req.params.id), await packages.settings(req.params.id))); });
 
   app.get('/api/projects/:id/assembly', async(req,res)=>{await getSavedProject(req.params.id);res.json(await assembly.current(req.params.id));});
