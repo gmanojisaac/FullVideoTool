@@ -1,0 +1,23 @@
+{
+  "name": "sixframe-remotion-poc",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Isolated proof of concept: Remotion composition for the comic lesson (title, word-synced captions, key-phrase cards, progress ring).",
+  "scripts": {
+    "prepare-assets": "node prepare.mjs",
+    "studio": "remotion studio src/index.ts",
+    "still": "remotion still src/index.ts Lesson out/still.png --frame=300",
+    "render": "remotion render src/index.ts Lesson out/lesson_desktop.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.535",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "remotion": "4.0.535"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.13",
+    "typescript": "~5.9.2"
+  }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Project } from '../../shared/project';
-import { maxNarrationInstructions, maxNarrationText, narrationModels, narrationVoices, validateNarrationScript, type GeneratedNarration, type NarrationScript, type NarrationState } from '../../shared/narration';
+import { maxNarrationInstructions, maxNarrationText, narrationModels, narrationVoices, validateNarrationScript, voiceRotation, type GeneratedNarration, type NarrationScript, type NarrationState } from '../../shared/narration';
 import { jsonOptions, request } from '../api';
 
 interface Props { project: Project | null; externalBusy: boolean; onGenerated: () => void; onRunningChange: (running: boolean) => void }
@@ -37,7 +37,7 @@ export default function NarrationStep({ project, externalBusy, onGenerated, onRu
     {!project ? <p className="empty-coordinates">Save a project to write narration.</p> : !script || !state ? <p>Loading narration script…</p> : <>
       <div className={`message ${state.keyConfigured ? 'success' : 'error'}`} role="status">{state.keyConfigured ? 'OpenAI key detected on this computer. Text is sent to OpenAI only when you press Generate.' : 'No OpenAI key found. Set the OPENAI_API_KEY environment variable and restart the local service to enable generation. You can still edit and save the script.'}</div>
       <div className="narration-settings">
-        <label>Voice<select value={script.voice} disabled={locked} onChange={e => edit({ voice: e.target.value as NarrationScript['voice'] })}>{narrationVoices.map(v => <option key={v} value={v}>{v}</option>)}</select></label>
+        <label>Voice<select value={script.voice} disabled={locked} onChange={e => edit({ voice: e.target.value as NarrationScript['voice'] })}><option value="auto">Auto — rotate: {voiceRotation.join(' → ')}</option>{narrationVoices.map(v => <option key={v} value={v}>{v}</option>)}</select></label>
         <label>Model<select value={script.model} disabled={locked} onChange={e => edit({ model: e.target.value as NarrationScript['model'] })}>{narrationModels.map(m => <option key={m} value={m}>{m}</option>)}</select></label>
         <label className="narration-instructions">Delivery instructions <small>(gpt-4o models only)</small><textarea rows={2} maxLength={maxNarrationInstructions} value={script.instructions} disabled={locked || !script.model.startsWith('gpt-4o')} onChange={e => edit({ instructions: e.target.value })}/></label>
       </div>
